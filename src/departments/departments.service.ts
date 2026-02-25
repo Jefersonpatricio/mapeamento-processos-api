@@ -7,18 +7,34 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { CreateDepartmentDto } from "./dto/create-department.dto.js";
 import { UpdateDepartmentDto } from "./dto/update-department.dto.js";
 
+interface ProcessStats {
+  type: string;
+  documented: boolean;
+}
+
 @Injectable()
 export class DepartmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.department.findMany({
+    const departments = await this.prisma.department.findMany({
       orderBy: { name: "asc" },
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         updatedBy: { select: { id: true, name: true, email: true } },
-        _count: { select: { processes: true } },
+        processes: { select: { type: true, documented: true } },
       },
+    });
+
+    return departments.map((dept) => {
+      const { processes: rawProcesses, ...rest } = dept;
+      const processes = rawProcesses as unknown as ProcessStats[];
+
+      return {
+        ...rest,
+        processCount: processes.length,
+        ...this.computeStats(processes),
+      };
     });
   }
 
@@ -28,7 +44,7 @@ export class DepartmentsService {
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         updatedBy: { select: { id: true, name: true, email: true } },
-        _count: { select: { processes: true } },
+        processes: { select: { type: true, documented: true } },
       },
     });
 
@@ -36,7 +52,14 @@ export class DepartmentsService {
       throw new NotFoundException(`Departamento ${id} não encontrado`);
     }
 
-    return department;
+    const { processes: rawProcesses, ...dept } = department;
+    const processes = rawProcesses as unknown as ProcessStats[];
+
+    return {
+      ...dept,
+      processCount: processes.length,
+      ...this.computeStats(processes),
+    };
   }
 
   async create(dto: CreateDepartmentDto, userId: string) {
@@ -111,5 +134,17 @@ export class DepartmentsService {
     await this.findOne(id);
 
     return this.prisma.department.delete({ where: { id } });
+  }
+
+  private computeStats(processes: ProcessStats[]) {
+    const systemicCount = processes.filter((p) => p.type === "systemic").length;
+    const manualCount = processes.filter((p) => p.type === "manual").length;
+    const documentedCount = processes.filter((p) => p.documented).length;
+    const documentedPercent =
+      processes.length > 0
+        ? Math.round((documentedCount / processes.length) * 100)
+        : 0;
+
+    return { systemicCount, manualCount, documentedPercent };
   }
 }

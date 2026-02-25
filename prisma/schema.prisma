@@ -31,6 +31,7 @@ model Department {
   name        String   @unique
   slug        String   @unique
   description String?  @db.Text
+  manager     String?
   active     Boolean  @default(true)
   
   createdById String
