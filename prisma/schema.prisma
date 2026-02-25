@@ -31,6 +31,7 @@ model Department {
   name        String   @unique
   slug        String   @unique
   description String?  @db.Text
+  active     Boolean  @default(true)
   
   createdById String
   createdBy   User     @relation("DepartmentCreatedBy", fields: [createdById], references: [id])
@@ -51,6 +52,9 @@ model Process {
   description  String?  @db.Text
   type         String
   criticality  String
+
+  active      Boolean  @default(true)
+  documented  Boolean  @default(false)
   
   departmentId String
   department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
