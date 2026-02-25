@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("user")
+  avatar    String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  createdProcesses     Process[]     @relation("ProcessCreatedBy")
+  updatedProcesses     Process[]     @relation("ProcessUpdatedBy")
+  createdDepartments   Department[]  @relation("DepartmentCreatedBy")
+  updatedDepartments   Department[]  @relation("DepartmentUpdatedBy")
+  
+  @@index([email])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  
+  createdById String
+  createdBy   User     @relation("DepartmentCreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?    @relation("DepartmentUpdatedBy", fields: [updatedById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  processes   Process[]
+  
+  @@index([slug])
+}
+
+model Process {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?  @db.Text
+  type         String
+  criticality  String
+  
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  parentId     String?
+  parent       Process?  @relation("ProcessHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Process[] @relation("ProcessHierarchy")
+  
+  tools        String[]
+  responsibles String[]
+  
+  documentLink String?
+  
+  positionX    Float     @default(0)
+  positionY    Float     @default(0)
+  
+  createdById  String
+  createdBy    User      @relation("ProcessCreatedBy", fields: [createdById], references: [id])
+  updatedById  String?
+  updatedBy    User?     @relation("ProcessUpdatedBy", fields: [updatedById], references: [id])
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  documents    Document[]
+  
+  @@index([departmentId])
+  @@index([parentId])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  
+  processId    String
+  process      Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  uploadedAt   DateTime @default(now())
+  
+  @@index([processId])
+}
