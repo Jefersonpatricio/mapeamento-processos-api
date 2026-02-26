@@ -1,0 +1,36 @@
+# Dependências
+node_modules
+
+# Build anterior
+dist
+
+# Variáveis de ambiente (nunca subir para a imagem)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Git
+.git
+.gitignore
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Coberturas de teste
+coverage
+
+# Docker (evita self-reference)
+Dockerfile
+docker-compose.yml
+.dockerignore
