@@ -10,6 +10,7 @@ import { UpdateDepartmentDto } from "./dto/update-department.dto.js";
 interface ProcessStats {
   type: string;
   documented: boolean;
+  documentLink: string | null;
 }
 
 @Injectable()
@@ -22,7 +23,9 @@ export class DepartmentsService {
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         updatedBy: { select: { id: true, name: true, email: true } },
-        processes: { select: { type: true, documented: true } },
+        processes: {
+          select: { type: true, documented: true, documentLink: true },
+        },
       },
     });
 
@@ -44,7 +47,9 @@ export class DepartmentsService {
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         updatedBy: { select: { id: true, name: true, email: true } },
-        processes: { select: { type: true, documented: true } },
+        processes: {
+          select: { type: true, documented: true, documentLink: true },
+        },
       },
     });
 
@@ -139,7 +144,9 @@ export class DepartmentsService {
   private computeStats(processes: ProcessStats[]) {
     const systemicCount = processes.filter((p) => p.type === "systemic").length;
     const manualCount = processes.filter((p) => p.type === "manual").length;
-    const documentedCount = processes.filter((p) => p.documented).length;
+    const documentedCount = processes.filter(
+      (p) => p.documented || p.documentLink,
+    ).length;
     const documentedPercent =
       processes.length > 0
         ? Math.round((documentedCount / processes.length) * 100)

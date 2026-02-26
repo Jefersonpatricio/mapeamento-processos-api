@@ -106,18 +106,21 @@ export class ProcessesService {
   async update(id: string, dto: UpdateProcessDto, userId: string) {
     await this.findOne(id);
 
-    const { departmentId, parentId, ...rest } = dto;
+    const { departmentId, parentId, documentLink, ...rest } = dto;
 
     return this.prisma.process.update({
       where: { id },
       data: {
         ...rest,
+        documentLink: documentLink ?? null,
         ...(departmentId && {
           department: { connect: { id: departmentId } },
         }),
-        ...(parentId && {
-          parent: { connect: { id: parentId } },
-        }),
+        ...(parentId !== undefined && parentId !== null
+          ? { parent: { connect: { id: parentId } } }
+          : parentId === null
+            ? { parent: { disconnect: true } }
+            : {}),
         updatedBy: { connect: { id: userId } },
       },
       include: {

@@ -7,7 +7,7 @@ export class UpdateProcessDto {
   parentId?: string;
   tools?: string[];
   responsibles?: string[];
-  documentLink?: string;
+  documentLink?: string | null;
   positionX?: number;
   positionY?: number;
 }
